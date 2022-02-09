@@ -1,11 +1,13 @@
 import React, { FC, useMemo, useState } from "react";
 import { useObservableState } from "observable-hooks";
 import "./App.css";
-import { Pokemon, selected$, pokemons$, deck$ } from "./store";
+import { PokemonProvider, usePokemon } from "./store";
 
 type DeckProps = {};
 
 const Deck: FC<DeckProps> = () => {
+  const { deck$ } = usePokemon();
+
   const deck = useObservableState(deck$, []);
   return (
     <div>
@@ -49,6 +51,8 @@ type ListType = {
 };
 
 const List: FC<ListType> = ({ value }) => {
+  const { pokemons$, selected$ } = usePokemon();
+
   const pokemons = useObservableState(pokemons$, []);
 
   const filterPokemons = useMemo(
@@ -84,18 +88,20 @@ function App() {
   const [search, setSearch] = useState("");
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
-      }}
-    >
-      <div>
-        <Search value={search} onChange={setSearch} />
-        <List value={search} />
+    <PokemonProvider>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+        }}
+      >
+        <div>
+          <Search value={search} onChange={setSearch} />
+          <List value={search} />
+        </div>
+        <Deck />
       </div>
-      <Deck />
-    </div>
+    </PokemonProvider>
   );
 }
 
