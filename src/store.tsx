@@ -34,7 +34,7 @@ const rawDataWithPower$ = rawData$.pipe(
 
 const selected$ = new BehaviorSubject<number[]>([]);
 
-const pokemons$ = rawData$.pipe(
+const pokemons$ = rawDataWithPower$.pipe(
   combineLatestWith(selected$),
   map(([pokemon, selected]) =>
     pokemon.map((p) => ({
@@ -73,5 +73,7 @@ const PokemonProvider: FC = ({ children }) => {
 };
 
 const usePokemon = () => useContext(PokemonContext);
+
+export type { Pokemon };
 
 export { PokemonProvider, usePokemon };

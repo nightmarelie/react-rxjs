@@ -1,7 +1,8 @@
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useCallback, useMemo } from "react";
 import { useObservableState } from "observable-hooks";
+import { BehaviorSubject, map, Observable, combineLatestWith } from "rxjs";
 import "./App.css";
-import { PokemonProvider, usePokemon } from "./store";
+import { PokemonProvider, usePokemon, Pokemon } from "./store";
 
 type DeckProps = {};
 
@@ -31,7 +32,7 @@ const Deck: FC<DeckProps> = () => {
 
 type SearchType = {
   value: string;
-  onChange: (data: string) => void;
+  onChange: (value: string) => void;
 };
 
 const Search: FC<SearchType> = ({ value, onChange }) => {
@@ -47,20 +48,23 @@ const Search: FC<SearchType> = ({ value, onChange }) => {
 };
 
 type ListType = {
-  value: string;
+  search$: Observable<string>;
 };
 
-const List: FC<ListType> = ({ value }) => {
+const List: FC<ListType> = ({ search$ }) => {
   const { pokemons$, selected$ } = usePokemon();
 
-  const pokemons = useObservableState(pokemons$, []);
-
-  const filterPokemons = useMemo(
+  const [filterPokemons] = useObservableState<Pokemon[]>(
     () =>
-      pokemons.filter((p) =>
-        p.name.toLowerCase().includes(value.toLowerCase())
+      pokemons$.pipe(
+        combineLatestWith(search$),
+        map(([pokemon, search]) =>
+          pokemon.filter((p) =>
+            p.name.toLowerCase().includes(search.toLowerCase())
+          )
+        )
       ),
-    [pokemons, value]
+    []
   );
 
   return (
@@ -85,7 +89,9 @@ const List: FC<ListType> = ({ value }) => {
   );
 };
 function App() {
-  const [search, setSearch] = useState("");
+  const search$ = useMemo(() => new BehaviorSubject(""), []);
+
+  const value = useObservableState(search$);
 
   return (
     <PokemonProvider>
@@ -96,8 +102,8 @@ function App() {
         }}
       >
         <div>
-          <Search value={search} onChange={setSearch} />
-          <List value={search} />
+          <Search value={value} onChange={(value) => search$.next(value)} />
+          <List search$={search$} />
         </div>
         <Deck />
       </div>
