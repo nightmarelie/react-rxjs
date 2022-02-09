@@ -1,4 +1,4 @@
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject, map, combineLatestWith } from "rxjs";
 
 interface Pokemon {
   id: number;
@@ -11,6 +11,7 @@ interface Pokemon {
   special_defense: number;
   speed: number;
   power?: number;
+  selected?: boolean;
 }
 
 const rawData$ = new BehaviorSubject<Pokemon[]>([]);
@@ -30,10 +31,26 @@ const rawDataWithPower$ = rawData$.pipe(
   )
 );
 
+const selected$ = new BehaviorSubject<number[]>([]);
+
+const pokemons$ = rawData$.pipe(
+  combineLatestWith(selected$),
+  map(([pokemon, selected]) =>
+    pokemon.map((p) => ({
+      ...p,
+      selected: selected.includes(p.id),
+    }))
+  )
+);
+
+const deck$ = pokemons$.pipe(
+  map((pokemon) => pokemon.filter((p) => p.selected))
+);
+
 fetch("/data.json")
   .then((res) => res.json())
   .then((data) => rawData$.next(data));
 
 export type { Pokemon };
 
-export { rawData$, rawDataWithPower$ };
+export { rawData$, rawDataWithPower$, selected$, pokemons$, deck$ };
