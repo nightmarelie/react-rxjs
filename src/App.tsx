@@ -1,11 +1,30 @@
-import React, { FC, useEffect, useMemo, useState } from "react";
+import React, { FC, useMemo, useState } from "react";
+import { useObservableState } from "observable-hooks";
 import "./App.css";
 import { Pokemon, selected$, pokemons$, deck$ } from "./store";
 
 type DeckProps = {};
 
 const Deck: FC<DeckProps> = () => {
-  return <h4>Deck</h4>;
+  const deck = useObservableState(deck$, []);
+  return (
+    <div>
+      <h4>Deck</h4>
+      <div>
+        {deck.map((p) => (
+          <div key={p.id} style={{ display: "flex" }}>
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+              alt={p.name}
+            />
+            <div>
+              <div>{p.name}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 type SearchType = {
@@ -30,13 +49,7 @@ type ListType = {
 };
 
 const List: FC<ListType> = ({ value }) => {
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-
-  useEffect(() => {
-    const sub = pokemons$.subscribe(setPokemons);
-
-    return () => sub.unsubscribe();
-  }, []);
+  const pokemons = useObservableState(pokemons$, []);
 
   const filterPokemons = useMemo(
     () =>
